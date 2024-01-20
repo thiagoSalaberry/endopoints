@@ -1,6 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 import { firestore } from '@/lib/firestore';
+import Cors from "cors"
+
+const cors = Cors({
+  origin: "*",
+  methods: ["GET","PATCH","POST"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+});
+
+function runMiddleware(req:NextApiRequest, res:NextApiResponse) {
+    return new Promise((resolve, reject) => {
+      cors(req, res, (result:any) => {
+        if (result instanceof Error) {
+          console.log("NO pasó el test de cors")
+          return reject(result);
+        };
+        console.log("Pasó el test de cors")
+        return resolve(result);
+      })
+    })
+  }
 const testColl = firestore.collection("test");
 
 class Test {
@@ -32,6 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.send("Este es el GET")
     }
     if(req.method == "POST") {
+        await runMiddleware(req, res);
         const {email} = req.body;
         const newTest = await Test.createNewUser({email});
         await newTest.pull();    
